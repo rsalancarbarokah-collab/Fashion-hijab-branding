@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faktur Penjualan Perusahaan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Pustaka untuk buat PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36BFFA',
+                        dark: '#1D2129',
+                        light: '#F2F3F5'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .faktur {
+                width: 210mm;
+                min-height: 297mm;
+                padding: 15mm;
+                margin: 0 auto;
+                background: white;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            }
+            @media print {
+                body { background: none; margin: 0; padding: 0; }
+                .no-print { display: none !important; }
+                .faktur { width: 100%; min-height: auto; padding: 0; margin: 0; box-shadow: none; }
+            }
+            .table-border th, .table-border td { border: 1px solid #333; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-dark">
+    <div class="container mx-auto py-6 px-4">
+        <!-- Bagian Input -->
+        <div class="no-print bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-bold text-primary mb-4 flex items-center">
+                <i class="fa fa-file-text-o mr-2"></i> Aplikasi Cetak & Simpan Faktur
+            </h2>
+            
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <h3 class="font-semibold text-lg mb-3">Data Perusahaan</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Perusahaan</label>
+                            <input type="text" id="namaPerusahaan" value="CV. MAKMUR SEJAHTERA" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Lengkap</label>
+                            <textarea id="alamatPerusahaan" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary">Jl. Pahlawan No. 123, Semarang, Jawa Tengah</textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Telepon</label>
+                                <input type="text" id="telpPerusahaan" value="(024) 1234567" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">NPWP</label>
+                                <input type="text" id="npwpPerusahaan" value="01.234.567.8-901.000" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold text-lg mb-3">Data Transaksi</h3>
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Faktur</label>
+                                <input type="text" id="noFaktur" value="FS-20260614-001" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+                                <input type="date" id="tglTransaksi" value="2026-06-14" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Pelanggan</label>
+                            <input type="text" id="namaPelanggan" placeholder="Masukkan nama pelanggan" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Pelanggan</label>
+                            <textarea id="alamatPelanggan" rows="2" placeholder="Masukkan alamat pelanggan" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Telepon Pelanggan</label>
+                                <input type="text" id="telpPelanggan" placeholder="Nomor telepon" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Status Pembayaran</label>
+                                <select id="statusBayar" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary">
+                                    <option value="Lunas Langsung">Lunas Langsung</option>
+                                    <option value="DP">DP</option>
+                                    <option value="Pelunasan">Pelunasan</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                <h3 class="font-semibold text-lg mb-3">Rincian Barang</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full mb-3">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="px-4 py-2 text-left">Nama Barang</th>
+                                <th class="px-4 py-2 text-center">Jumlah</th>
+                                <th class="px-4 py-2 text-right">Harga Satuan (Rp)</th>
+                                <th class="px-4 py-2 text-right">Subtotal (Rp)</th>
+                                <th class="px-4 py-2 text-center no-print">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="daftarBarang">
+                            <tr class="barang-row">
+                                <td><input type="text" class="w-full px-2 py-1 border border-gray-300 rounded" placeholder="Nama barang"></td>
+                                <td><input type="number" min="1" value="1" class="jumlah w-full px-2 py-1 border border-gray-300 rounded text-center"></td>
+                                <td><input type="number" min="0" value="0" class="harga w-full px-2 py-1 border border-gray-300 rounded text-right"></td>
+                                <td class="subtotal text-right font-medium">0</td>
+                                <td class="text-center no-print"><button type="button" class="hapus-barang text-red-500 hover:text-red-700"><i class="fa fa-trash"></i></button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button type="button" id="tambahBarang" class="bg-secondary text-white px-4 py-2 rounded-md hover:bg-secondary/90 transition-colors">
+                    <i class="fa fa-plus mr-1"></i> Tambah Barang
+                </button>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6 mb-6">
+                <div class="md:col-span-2"></div>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center font-semibold text-lg">
+                        <span>Total Keseluruhan:</span>
+                        <span id="totalHarga" class="text-primary">Rp 0,00</span>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Uang Yang Dibayar (Rp)</label>
+                        <input type="number" id="uangDibayar" min="0" value="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary">
+                    </div>
+                    <div class="flex justify-between items-center font-semibold text-lg">
+                        <span>Sisa Pembayaran:</span>
+                        <span id="sisaBayar" class="text-red-600">Rp 0,00</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex flex-wrap gap-4 no-print">
+                <button type="button" id="buatFaktur" class="bg-primary text-white px-6 py-3 rounded-md hover:bg-primary/90 transition-colors font-semibold">
+                    <i class="fa fa-file-o mr-2"></i> Buat Faktur
+                </button>
+                <button type="button" id="cetakFaktur" class="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition-colors font-semibold" disabled>
+                    <i class="fa fa-print mr-2"></i> Cetak
+                </button>
+                <!-- Tombol Baru: Simpan ke PDF -->
+                <button type="button" id="simpanPDF" class="bg-red-600 text-white px-6 py-3 rounded-md hover:bg-red-700 transition-colors font-semibold" disabled>
+                    <i class="fa fa-file-pdf-o mr-2"></i> Simpan ke PDF
+                </button>
+                <button type="button" id="resetForm" class="bg-gray-500 text-white px-6 py-3 rounded-md hover:bg-gray-600 transition-colors font-semibold">
+                    <i class="fa fa-refresh mr-2"></i> Kosongkan
+                </button>
+            </div>
+        </div>
+        
+        <!-- Tampilan Faktur -->
+        <div id="areaFaktur" class="hidden">
+            <div class="faktur">
+                <div class="text-center border-b-2 border-dark pb-4 mb-6">
+                    <h1 class="text-3xl font-bold uppercase" id="kopNamaPerusahaan"></h1>
+                    <p class="mt-1" id="kopAlamatPerusahaan"></p>
+                    <p class="mt-1">Telp: <span id="kopTelpPerusahaan"></span> | NPWP: <span id="kopNpwpPerusahaan"></span></p>
+                </div>
+                <h2 class="text-center text-2xl font-bold uppercase mb-6">FAKTUR PENJUALAN</h2>
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <table>
+                            <tr><td class="font-semibold w-32">No Faktur</td><td>: <span id="infoNoFaktur"></span></td></tr>
+                            <tr><td class="font-semibold">Tanggal</td><td>: <span id="infoTglTransaksi"></span></td></tr>
+                            <tr><td class="font-semibold">Status Bayar</td><td>: <span id="infoStatusBayar" class="font-bold"></span></td></tr>
+                        </table>
+                    </div>
+                    <div>
+                        <table>
+                            <tr><td class="font-semibold w-32">Nama Pelanggan</td><td>: <span id="infoNamaPelanggan"></span></td></tr>
+                            <tr><td class="font-semibold">Alamat</td><td>: <span id="infoAlamatPelanggan"></span></td></tr>
+                            <tr><td class="font-semibold">Telepon</td><td>: <span id="infoTelpPelanggan"></span></td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="overflow-x-auto mb-6">
+                    <table class="w-full table-border border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="px-4 py-2 text-center">No</th>
+                                <th class="px-4 py-2 text-left">Nama Barang</th>
+                                <th class="px-4 py-2 text-center">Jumlah</th>
+                                <th class="px-4 py-2 text-right">Harga Satuan</th>
+                                <th class="px-4 py-2 text-right">Jumlah</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rincianBarangFaktur"></tbody>
+                        <tfoot>
+                            <tr><td colspan="4" class="px-4 py-2 text-right font-semibold">Total Keseluruhan</td><td class="px-4 py-2 text-right font-semibold" id="fakturTotal"></td></tr>
+                            <tr><td colspan="4" class="px-4 py-2 text-right font-semibold">Uang Dibayar</td><td class="px-4 py-2 text-right font-semibold" id="fakturDibayar"></td></tr>
+                            <tr><td colspan="4" class="px-4 py-2 text-right font-semibold">Sisa Pembayaran</td><td class="px-4 py-2 text-right font-semibold text-red-600" id="fakturSisa"></td></tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="mb-8 p-3 bg-gray-50 rounded border border-gray-200">
+                    <h4 class="font-semibold mb-2">Keterangan:</h4>
+                    <ul class="list-disc pl-5 text-sm">
+                        <li><b>Lunas Langsung</b>: Bayar penuh saat transaksi</li>
+                        <li><b>DP</b>: Bayar sebagian, sisa dibayar nanti</li>
+                        <li><b>Pelunasan</b>: Penyelesaian sisa hutang</li>
+                    </ul>
+                </div>
+                <div class="grid md:grid-cols-3 gap-6 mt-12">
+                    <div class="text-center"><p>Penerima,</p><div class="h-20"></div><p>( ............................ )</p></div>
+                    <div class="text-center"><p>Mengetahui,</p><div class="h-20"></div><p>( ............................ )</p></div>
+                    <div class="text-center"><p>Hormat Kami,</p><div class="h-20"></div><p class="font-semibold">Bagian Penjualan</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatRupiah(angka) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 2 }).format(angka);
+        }
+
+        function hitungTotal() {
+            let total = 0;
+            document.querySelectorAll('.barang-row').forEach(row => {
+                const jumlah = parseFloat(row.querySelector('.jumlah').value) || 0;
+                const harga = parseFloat(row.querySelector('.harga').value) || 0;
+                const subtotal = jumlah * harga;
+                row.querySelector('.subtotal').textContent = formatRupiah(subtotal);
+                total += subtotal;
+            });
+            document.getElementById('totalHarga').textContent = formatRupiah(total);
+            const dibayar = parseFloat(document.getElementById('uangDibayar').value) || 0;
+            const sisa = total - dibayar;
+            document.getElementById('sisaBayar').textContent = formatRupiah(sisa);
+            return { total, dibayar, sisa };
+        }
+
+        document.getElementById('tambahBarang').addEventListener('click', () => {
+            const tbody = document.getElementById('daftarBarang');
+            const row = document.createElement('tr');
+            row.className = 'barang-row border-t border-gray-200';
+            row.innerHTML = `<td><input type="text" class="w-full px-2 py-1 border rounded" placeholder="Nama barang"></td>
+            <td><input type="number" min="1" value="1" class="jumlah w-full px-2 py-1 border rounded text-center"></td>
+            <td><input type="number" min="0" value="0" class="harga w-full px-2 py-1 border rounded text-right"></td>
+            <td class="subtotal text-right font-medium">0</td>
+            <td class="text-center no-print"><button class="hapus-barang text-red-500"><i class="fa fa-trash"></i></button></td>`;
+            tbody.appendChild(row);
+            row.querySelector('.jumlah').addEventListener('input', hitungTotal);
+            row.querySelector('.harga').addEventListener('input', hitungTotal);
+            row.querySelector('.hapus-barang').addEventListener('click', () => { row.remove(); hitungTotal(); });
+        });
+
+        document.querySelector('.jumlah').addEventListener('input', hitungTotal);
+        document.querySelector('.harga').addEventListener('input', hitungTotal);
+        document.querySelector('.hapus-barang').addEventListener('click', () => { if(document.querySelectorAll('.barang-row').length>1){document.querySelector('.barang-row').remove();hitungTotal();} });
+        document.getElementById('uangDibayar').addEventListener('input', hitungTotal);
+
+        let dataFaktur = {};
+        document.getElementById('buatFaktur').addEventListener('click', () => {
+            const { total, dibayar, sisa } = hitungTotal();
+            dataFaktur = {
+                namaPerusahaan: document.getElementById('namaPerusahaan').value,
+                alamatPerusahaan: document.getElementById('alamatPerusahaan').value,
+                telpPerusahaan: document.getElementById('telpPerusahaan').value,
+                npwpPerusahaan: document.getElementById('npwpPerusahaan').value,
+                noFaktur: document.getElementById('noFaktur').value,
+                tglTransaksi: new Date(document.getElementById('tglTransaksi').value).toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'}),
+                statusBayar: document.getElementById('statusBayar').value,
+                namaPelanggan: document.getElementById('namaPelanggan').value || '-',
+                alamatPelanggan: document.getElementById('alamatPelanggan').value || '-',
+                telpPelanggan: document.getElementById('telpPelanggan').value || '-',
+                total, dibayar, sisa,
+                barang: []
+            };
+            document.querySelectorAll('.barang-row').forEach(row => {
+                dataFaktur.barang.push({
+                    nama: row.querySelector('input:first-child').value || 'Barang',
+                    jumlah: row.querySelector('.jumlah').value,
+                    harga: row.querySelector('.harga').value,
+                    subtotal: (row.querySelector('.jumlah').value * row.querySelector('.harga').value)
+                });
+            });
+
+            // Tampilkan ke layar
+            document.getElementById('kopNamaPerusahaan').textContent = dataFaktur.namaPerusahaan;
+            document.getElementById('kopAlamatPerusahaan').textContent = dataFaktur.alamatPerusahaan;
+            document.getElementById('kopTelpPerusahaan').textContent = dataFaktur.telpPerusahaan;
+            document.getElementById('kopNpwpPerusahaan').textContent = dataFaktur.npwpPerusahaan;
+            document.getElementById('infoNoFaktur').textContent = dataFaktur.noFaktur;
+            document.getElementById('infoTglTransaksi').textContent = dataFaktur.tglTransaksi;
+            document.getElementById('infoStatusBayar').textContent = dataFaktur.statusBayar;
+            document.getElementById('infoNamaPelanggan').textContent = dataFaktur.namaPelanggan;
+            document.getElementById('infoAlamatPelanggan').textContent = dataFaktur.alamatPelanggan;
+            document.getElementById('infoTelpPelanggan').textContent = dataFaktur.telpPelanggan;
+            
+            const tbody = document.getElementById('rincianBarangFaktur');
+            tbody.innerHTML = '';
+            dataFaktur.barang.forEach((brg, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="px-4 py-2 text-center">${i+1}</td>
+                <td class="px-4 py-2">${brg.nama}</td>
+                <td class="px-4 py-2 text-center">${parseInt(brg.jumlah).toLocaleString('id-ID')}</td>
+                <td class="px-4 py-2 text-right">${formatRupiah(brg.harga)}</td>
+                <td class="px-4 py-2 text-right">${formatRupiah(brg.subtotal)}</td>`;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('fakturTotal').textContent = formatRupiah(dataFaktur.total);
+            document.getElementById('fakturDibayar').textContent = formatRupiah(dataFaktur.dibayar);
+            document.getElementById('fakturSisa').textContent = formatRupiah(dataFaktur.sisa);
+            
+            document.getElementById('areaFaktur').classList.remove('hidden');
+            document.getElementById('cetakFaktur').disabled = false;
+            document.getElementById('simpanPDF').disabled = false;
+            document.getElementById('areaFaktur').scrollIntoView({behavior:'smooth'});
+        });
+
+        document.getElementById('cetakFaktur').addEventListener('click', () => window.print());
+
+        // FITUR SIMPAN KE PDF
+        document.getElementById('simpanPDF').addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+            let y = 15;
+
+            // Kop Perusahaan
+            doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+            doc.text(dataFaktur.namaPerusahaan.toUpperCase(), 105, y, { align: 'center' }); y += 6;
+            doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+            doc.text(dataFaktur.alamatPerusahaan, 105, y, { align: 'center' }); y += 5;
+            doc.text(`Telp: ${dataFaktur.telpPerusahaan} | NPWP: ${dataFaktur.npwpPerusahaan}`, 105, y, { align: 'center' }); y += 8;
+            doc.setLineWidth(0.5); doc.line(20, y, 190, y); y += 10;
+
+            // Judul
+            doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+            doc.text('FAKTUR PENJUALAN', 105, y, { align: 'center' }); y += 10;
+
+            // Info Faktur
+            doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+            doc.text(`No Faktur : ${dataFaktur.noFaktur}`, 20, y); y += 5;
+            doc.text(`Tanggal   : ${dataFaktur.tglTransaksi}`, 20, y); y += 5;
+            doc.text(`Status    : ${dataFaktur.statusBayar}`, 20, y); y += 5;
+            doc.text(`Pelanggan : ${dataFaktur.namaPelanggan}`, 20, y); y += 5;
+            doc.text(`Alamat    : ${dataFaktur.alamatPelanggan}`, 20, y); y += 5;
+            doc.text(`Telp      : ${dataFaktur.telpPelanggan}`, 20, y); y += 10;
+
+            // Tabel Barang
+            const tableData = dataFaktur.barang.map((brg, i) => [
+                i+1, brg.nama, brg.jumlah, formatRupiah(brg.harga), formatRupiah(brg.subtotal)
+            ]);
+            doc.autoTable({
+                startY: y,
+                head: [['No', 'Nama Barang', 'Jumlah', 'Harga Satuan', 'Jumlah']],
+                body: tableData,
+                foot: [
+                    ['', '', '', 'Total Keseluruhan', formatRupiah(dataFaktur.total)],
+                    ['', '', '', 'Uang Dibayar', formatRupiah(dataFaktur.dibayar)],
+                    ['', '', '', 'Sisa Pembayaran', formatRupiah(dataFaktur.sisa)]
+                ],
+                theme: 'grid', styles: { fontSize: 9 }, headStyles: { fillColor: [240,240,240], textColor: 0 },
+                footStyles: { fontStyle: 'bold' }
+            });
+            y = doc.lastAutoTable.finalY + 10;
+
+            // Keterangan
+            doc.setFontSize(9);
+            doc.text('Keterangan:', 20, y); y += 5;
+            doc.text('- Lunas Langsung: Pembayaran penuh saat transaksi', 25, y); y += 4;
+            doc.text('- DP: Pembayaran sebagian, sisa dibayar nanti', 25, y); y += 4;
+            doc.text('- Pelunasan: Penyelesaian sisa hutang', 25, y); y += 15;
+
+            // Tanda Tangan
+            doc.text('Penerima Barang', 50, y, { align: 'center' });
+            doc.text('Mengetahui', 105, y, { align: 'center' });
+            doc.text('Hormat Kami', 160, y, { align: 'center' }); y += 20;
+            doc.text('(....................)', 50, y, { align: 'center' });
+            doc.text('(....................)', 105, y, { align: 'center' });
+            doc.text('(....................)', 160, y, { align: 'center' });
+
+            // Simpan PDF
+            const namaFile = `Faktur_${dataFaktur.noFaktur.replace(/\//g,'-')}.pdf`;
+            doc.save(namaFile);
+        });
+
+        document.getElementById('resetForm').addEventListener('click', () => {
+            if(confirm('Kosongkan semua data?')){
+                document.querySelectorAll('input:not([type="date"]), textarea').forEach(el => el.value = '');
+                document.getElementById('tglTransaksi').value = new Date().toISOString().split('T')[0];
+                document.querySelectorAll('.barang-row').forEach((r,i)=>{if(i>0)r.remove();});
+                document.querySelector('.jumlah').value = 1;
+                document.querySelector('.harga').value = 0;
+                document.getElementById('uangDibayar').value = 0;
+                hitungTotal();
+                document.getElementById('areaFaktur').classList.add('hidden');
+                document.getElementById('cetakFaktur').disabled = true;
+                document.getElementById('simpanPDF').disabled = true;
+            }
+        });
+
+        hitungTotal();
+    </script>
+</body>
+</html>
